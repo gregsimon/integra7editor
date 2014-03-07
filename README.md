@@ -1,5 +1,5 @@
-integra7editor
-==============
+Integra-7 Editor
+================
 
 WebMIDI Editor for Roland Integra-7
 
