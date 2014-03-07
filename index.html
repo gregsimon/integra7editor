@@ -1,9 +1,23 @@
 <html>
 	<head>
 		<title>Integra-7 Editor</title>
-		<script src="integra7.js"></script>
+		<link href='http://fonts.googleapis.com/css?family=Roboto' rel='stylesheet' type='text/css'>
+		<link rel="stylesheet" href="css/main.css" type="text/css">
+		<script src='js/WebMIDIAPI.js'></script>
+		<script src="js/integra7.js"></script>
 	</head>
 	<body onload="integra7_init()">
+		<img src="integra7.png"/>
 
+<div class="midi">MIDI Input: <select id=midiIn onchange='changeMidiIn();'>
+			<option value="">Not connected</option>
+		</select>
+	 MIDI Output:
+		<select id=midiOut onchange='changeMidiOut();'>
+			<option value="">Not connected</option>
+		</select>
+</div>
+	
+		<input type='button' value="Load Part" onclick='load_part()'/>
 	</body>
 </html>
