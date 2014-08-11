@@ -7,7 +7,6 @@
 		<script src="js/integra7.js"></script>
 	</head>
 	<body onload="integra7_init()">
-		<img src="integra7.png"/>
 
 <div class="midi">MIDI Input: <select id=midiIn onchange='changeMidiIn();'>
 			<option value="">Not connected</option>
@@ -19,5 +18,14 @@
 </div>
 	
 		<input type='button' value="Load Part" onclick='load_part()'/>
+		<input type='button' value="SN-A" onclick='load_bank("sna")'/>
+		<input type='button' value="SN-S" onclick='load_bank("sns")'/>
+		<input type='button' value="SN-D" onclick='load_bank("snd")'/>
+		<input type='button' value="PCM-S" onclick='load_bank("pcms")'/>
+		<input type='button' value="PCM-D" onclick='load_bank("pcmd")'/>
+
+		<div>
+		<input type='button' value="Read Name" onclick='read_name()'/>
+		</div>
 	</body>
 </html>
