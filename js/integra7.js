@@ -32,6 +32,66 @@ function midiMessageReceived(event) {
     g_next_midi_callback_fn(event);
 }
 
+var g_bank_index =-1;
+var g_bank_collection_fns = [
+  {fn:collectSNA_Preset, type:"Preset", eng:"SuperNATURAL-Acoustic"},
+  {fn:collectSNA_User, type:"User", eng:"SuperNATURAL-Acoustic"},
+  {fn:collectSNS_Preset, type:"Preset", eng:"SuperNATURAL-Synth"},
+  {fn:collectSNS_User, type:"User", eng:"SuperNATURAL-Synth"},
+  {fn:collectSND_Preset, type:"Preset", eng:"SuperNATURAL-Drums"},
+  {fn:collectSND_User, type:"User", eng:"SuperNATURAL-Drums"},
+  {fn:collectPCMS_Preset, type:"Preset", eng:"PCM-Synth"},
+  {fn:collectPCMS_User, type:"User", eng:"PCM-Synth"},
+  {fn:collectPCMD_Preset, type:"Preset", eng:"PCM-Drums"},
+  {fn:collectPCMD_User, type:"User", eng:"PCM-Drums"},
+
+  {fn:collectSRX01_Tone, type:"SRX", eng:"SRX01"},
+  {fn:collectSRX02_Tone, type:"SRX", eng:"SRX02"},
+  {fn:collectSRX03_Tone, type:"SRX", eng:"SRX03"},
+  {fn:collectSRX03_Drum, type:"SRX", eng:"SRX03 Drums"},
+  {fn:collectSRX04_Tone, type:"SRX", eng:"SRX04"},
+  {fn:collectSRX05_Tone, type:"SRX", eng:"SRX05"},
+  {fn:collectSRX05_Drum, type:"SRX", eng:"SRX05 Drums"},
+  {fn:collectSRX06_Tone, type:"SRX", eng:"SRX06"},
+  {fn:collectSRX06_Drum, type:"SRX", eng:"SRX06 Drums"},
+  {fn:collectSRX07_Tone, type:"SRX", eng:"SRX07"},
+  {fn:collectSRX07_Drum, type:"SRX", eng:"SRX07 Drums"},
+  {fn:collectSRX08_Tone, type:"SRX", eng:"SRX08"},
+  {fn:collectSRX08_Drum, type:"SRX", eng:"SRX08 Drums"},
+  {fn:collectSRX09_Tone, type:"SRX", eng:"SRX09"},
+  {fn:collectSRX10_Tone, type:"SRX", eng:"SRX10"},
+  {fn:collectSRX11_Tone, type:"SRX", eng:"SRX11"},
+  {fn:collectSRX12_Tone, type:"SRX", eng:"SRX12"},
+  undefined
+];
+
+var g_tones = [];
+
+// This is the kick-off function that builds
+// the entire script. It collects all banks that are available
+// building a giant database, then writes out the database 
+// in a Cubase-friendly fashion.
+function build_script() {
+  g_tones = [];
+  g_bank_index = 0;
+  var bank = g_bank_collection_fns[g_bank_index];
+  
+  document.getElementById('status').innerText = ("collecting "+bank.eng+" "+bank.type);
+
+  bank.fn();
+}
+
+function collect_next_bank() {
+  g_bank_index++;
+  var bank = g_bank_collection_fns[g_bank_index];
+  if (bank != undefined) {
+    document.getElementById('status').innerText = ("collecting "+bank.eng+" "+bank.type);
+    bank.fn();
+  } else {
+    console.log("complete, collected " + g_tones);
+  } 
+}
+
 var categories = [
 "No assign",          // 00000
 "Ac. Piano",          // 00001
@@ -373,6 +433,7 @@ function bank_timeout() {
   g_bank_timeout_id = undefined;
 
   console.log("*** BANK NOT AVAILABLE ***");
+  collect_next_bank();
 }
 // ------------------------------------------------------------------------
 
@@ -392,6 +453,14 @@ g_next_midi_callback_fn = function(event) {
 
     if (g_patch_name != "<<No media>>" && g_patch_name != "INIT TONE   ") {
       console.log("'"+g_patch_name+"' cat="+category);
+
+      var t = {};
+      t.name = g_patch_name;
+      t.msb = g_msb;
+      t.lsb = g_msb;
+      t.pc = g_pc;
+      t.cat = category;
+      g_tones.push(t);
 
       // TODO : LOAD SOUND INTO DATABASE
       // g_msb g_lsb g_pc g_patch_name g_category
@@ -420,6 +489,7 @@ g_next_midi_callback_fn = function(event) {
     } else {
       // TODO : we are DONE with this bank.
       console.log("**** BANK DONE ****");
+      collect_next_bank();
     }
   }
 
