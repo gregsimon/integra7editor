@@ -23,11 +23,52 @@ function midiMessageReceived(event) {
   //console.log(String.fromCharCode.apply(null, event.data.subarray(11, 23)));
 }
 
+var categories = [
+"No assign",          // 00000
+"Ac. Piano",          // 00001
+"E. Piano",           // 00010
+"Organ",              // 00011
+"Other Keyboards",    // 00100
+"Accordion/Harmonica",// 00101 
+"Bell/Mallet",        // 00110
+"Ac. Guitar",         // 00111
+"E. Guitar",          // 01000
+"Dist Guitar",        // 01001
+"Ac. Bass",           // 01010
+"E. Bass",            // 01011
+"Synth Bass",         // 01100
+"Plucked/Stroke",     // 01101
+"Strings",            // 01110
+"Brass",              // 01111
+"Wind",               // 10000
+"Flute", 
+"Sax", 
+"Recorder",
+"Vox/Choir", 
+"Synth Lead", 
+"Synth Brass", 
+"Synth Pad/Strings", 
+"Synth Bellpad",
+"Synth PolyKey", 
+"FX", 
+"Synth Seq/Pop", 
+"Phrase", 
+"Pulsating", 
+"Beat & Groove", 
+"Hit", 
+"Sound FX", 
+"Drums", 
+"Percussion", 
+"Combination"
+];
+
 var g_lsb_range;
 var g_lsb;
-var g_msb = [0x89];
+var g_msb;
 var g_pc_range;
 var g_pc;
+
+var total_tones = 0;
 
 /*
 SN-A
@@ -47,14 +88,19 @@ function collectSNA_Preset(){
   g_pc = 0;
 
   g_next_midi_callback_fn = function(event) {
-    console.log(String.fromCharCode.apply(null, event.data.subarray(11, 23))); 
+    total_tones ++;
+    var name = String.fromCharCode.apply(null, event.data.subarray(11, 23));
+    var category = event.data[11 + 27];
+    var s = category.toString(2);
+
+    console.log("("+total_tones+") -> "+name+"   "+s+" "+categories[category]);
 
     g_pc++;
-    if (g_pc >= g_pc_range[1]) {
+    if (g_pc > g_pc_range[1]) {
       g_pc = g_pc_range[0];
       // now update lsb.
       g_lsb++;
-      if (g_lsb >= g_lsb_range[1]) {
+      if (g_lsb > g_lsb_range[1]) {
         g_lsb = g_lsb_range[0];
         // now update msb.
         g_msb++;
@@ -120,7 +166,7 @@ SN-S
 */
 function load_part(msb, lsb, pc) {
   var ch = 0;
-  console.log("load_part "+msb+" "+lsb+" "+pc);
+  //console.log("load_part "+msb+" "+lsb+" "+pc);
   midiOut.send([0xb0|ch, 0x00, msb]);
   midiOut.send([0xb0|ch, 0x20, lsb]);
   midiOut.send([0xc0|ch, pc]);
@@ -137,6 +183,20 @@ function read_name(engineName) {
   // 03 00 00 | Temporary SuperNATURAL Drum Kit |
   // 10 00 00 | Temporary PCM Drum Kit
 
+  if (engineName == "sna") {
+    // 19 02 00 00
+
+    // read first 12 bytes -- this is the name!
+    sendSYSEXwithRolandChecksum([0xf0, 0x41, 16, 
+        0x00, 0x00, 0x64, // model 1,2,3
+        0x11, // cmd -> RQ1
+        0x19, 0x02, 0x00, 0x00, // addr
+        0x00, 0x00, 0x00, 35, // size
+        0x00, // checksum
+        0xf7
+        ]);
+  }
+
   if (engineName == "sns") {
     // 19 01 00 00
 
@@ -145,63 +205,49 @@ function read_name(engineName) {
         0x00, 0x00, 0x64, // model 1,2,3
         0x11, // cmd -> RQ1
         0x19, 0x01, 0x00, 0x00, // addr
-        0x00, 0x00, 0x00, 12, // size
-        0x00, // checksum
-        0xf7
-        ]);
-  }
-
-  if (engineName == "sna") {
-    // 19 01 00 00
-
-    // read first 12 bytes -- this is the name!
-    sendSYSEXwithRolandChecksum([0xf0, 0x41, 16, 
-        0x00, 0x00, 0x64, // model 1,2,3
-        0x11, // cmd -> RQ1
-        0x19, 0x02, 0x00, 0x00, // addr
-        0x00, 0x00, 0x00, 12, // size
+        0x00, 0x00, 0x00, 32, // size
         0x00, // checksum
         0xf7
         ]);
   }
 
   if (engineName == "snd") {
-    // 19 01 00 00
+    // 19 03 00 00
 
     // read first 12 bytes -- this is the name!
     sendSYSEXwithRolandChecksum([0xf0, 0x41, 16, 
         0x00, 0x00, 0x64, // model 1,2,3
         0x11, // cmd -> RQ1
         0x19, 0x03, 0x00, 0x00, // addr
-        0x00, 0x00, 0x00, 12, // size
+        0x00, 0x00, 0x00, 32, // size
         0x00, // checksum
         0xf7
         ]);
   }
 
   if (engineName == "pcms") {
-    // 19 01 00 00
+    // 19 00 00 00
 
     // read first 12 bytes -- this is the name!
     sendSYSEXwithRolandChecksum([0xf0, 0x41, 16, 
         0x00, 0x00, 0x64, // model 1,2,3
         0x11, // cmd -> RQ1
         0x19, 0x00, 0x00, 0x00, // addr
-        0x00, 0x00, 0x00, 12, // size
+        0x00, 0x00, 0x00, 32, // size
         0x00, // checksum
         0xf7
         ]);
   }
 
   if (engineName == "pcmd") {
-    // 19 01 00 00
+    // 19 10 00 00
 
     // read first 12 bytes -- this is the name!
     sendSYSEXwithRolandChecksum([0xf0, 0x41, 16, 
         0x00, 0x00, 0x64, // model 1,2,3
         0x11, // cmd -> RQ1
         0x19, 0x10, 0x00, 0x00, // addr
-        0x00, 0x00, 0x00, 12, // size
+        0x00, 0x00, 0x00, 32, // size
         0x00, // checksum
         0xf7
         ]);
