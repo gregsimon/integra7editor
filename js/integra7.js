@@ -1,3 +1,5 @@
+"Copyright 2014 Greg Simon"
+
 
 var midiAccess = null;
 var midiIn = null;
@@ -7,6 +9,7 @@ var selectMIDIOut = null;
 var deviceId = 17;
 var studioSetControlChannel = 16;
 
+
 function integra7_init() {
 	if (navigator.requestMIDIAccess)
    		navigator.requestMIDIAccess({sysex: true}).then( onMIDIInit, onMIDIFail );
@@ -15,10 +18,15 @@ function integra7_init() {
 var g_next_midi_callback_fn = undefined;
 
 function midiMessageReceived(event) {
+  if (g_bank_timeout_id != undefined)
+    clearTimeout(g_bank_timeout_id);
+  g_bank_timeout_id = undefined;
+
 	/*console.log("MIDI MESSAGE IN "+(event.data.length-13)+
       " addr "+event.data[7].toString(16)+" "+
       event.data[8].toString(16)+" "+
-      event.data[9].toString(16)+" "+event.data[10].toString(16)) ;*/
+      event.data[9].toString(16)+" "+event.data[10].toString(16)) ;
+  */
 
   if (g_next_midi_callback_fn != undefined)
     g_next_midi_callback_fn(event);
@@ -68,9 +76,10 @@ var g_lsb;
 var g_msb;
 var g_pc_range;
 var g_pc;
-var g_group;
+var g_instr_type;
 var g_cat_offset;
 var g_patch_name;
+var g_bank_timeout_id = undefined;
 
 var total_tones = 0;
 
@@ -283,6 +292,19 @@ function collectSRX12_Tone() {
   collect_bank([93,93],[26,26],[0,49],'pcms');
 }
 
+/*
+089  |096        |001-017    |ExpansionSNTone(ExSN1)      |0001-0017 
+-----+-----------+-----------+----------------------------+------------- 
+089  |097        |001-017    |ExpansionSNTone(ExSN2)      |0001-0017 
+-----+-----------+-----------+----------------------------+------------- 
+089  |098        |001-050    |ExpansionSNTone(ExSN3)      |0001-0050 
+-----+-----------+-----------+----------------------------+------------- 
+089  |099        |001-012    |ExpansionSNTone(ExSN4)      |0001-0012 
+-----+-----------+-----------+----------------------------+------------- 
+089  |100        |001-012    |ExpansionSNTone(ExSN5)      |0001-0012 
+-----+-----------+-----------+----------------------------+------------- 
+088  |101        |001-007    |ExpansionSNDrum(ExSN6)      |0001-0007 
+*/
 function collect_EXSN1() {
   collect_bank([89,89], [96,96],[0,16],'sna');
 }
@@ -302,53 +324,56 @@ function collect_EXSN6() {
   collect_bank([88,88], [101,101],[0,6],'snd');
 }
 
+/*
+-----+-----------+-----------+----------------------------+------------- 
+097  | 000       | 001 - 128 | Expansion PCM Tone (ExPCM) | 0001 - 0128
+     | :         |  :        |                            | :
+     | 003       | 001 - 128 |                            | 0385 - 0512 
+096  | 000       | 001 - 019 | Expansion PCM Drum (ExPCM) | 0001 - 0019
+-----+-----------+-----------+----------------------------+------------- 
+121  | 000 -     | 001 - 128 | Expansion GM2 Tone (GM2#)  | 0001 - 0256 
+120  | 000       | 001-057   |ExpansionGM2Drum(GM2#)      | 0001 - 0009
+*/
 function collect_ExPCM_Tone() {
-  collect_bank([97,97],[0,3],[0,127],'pcms');
+  collect_bank([97,97],[0,3],[0,127],'expcm');
 }
 function collect_ExPCM_Drum() {
   collect_bank([96,96],[0,0],[0,127],'pcmd');
 }
-
-/*
-089  |096        |001-017    |ExpansionSNTone(ExSN1)      |0001-0017 
------+-----------+-----------+----------------------------+------------- 
-089  |097        |001-017    |ExpansionSNTone(ExSN2)      |0001-0017 
------+-----------+-----------+----------------------------+------------- 
-089  |098        |001-050    |ExpansionSNTone(ExSN3)      |0001-0050 
------+-----------+-----------+----------------------------+------------- 
-089  |099        |001-012    |ExpansionSNTone(ExSN4)      |0001-0012 
------+-----------+-----------+----------------------------+------------- 
-089  |100        |001-012    |ExpansionSNTone(ExSN5)      |0001-0012 
------+-----------+-----------+----------------------------+------------- 
-088  |101        |001-007    |ExpansionSNDrum(ExSN6)      |0001-0007 
+function collect_GM2_Tone() {
+  collect_bank([121,121],[0,0],[0,127],'pcms');
+}
+function collect_GM2_Drum() {
+  collect_bank([120,120],[0,0],[0,56],'pcmd');
+}
 
 
------+-----------+-----------+----------------------------+------------- 
-097  | 000       | 001 - 128 | Expansion PCM Tone (ExPCM) | 0001 - 0128
-     | :         |  :        |                            | :
-     | 003       | 001-128   |                            | 0385-0512 
-096  | 000       | 001 - 019 | Expansion PCM Drum (ExPCM) | 0001 - 0019
------+-----------+-----------+----------------------------+------------- 
-121  | 000 -     | 001 - 128 | Expansion GM2 Tone (GM2#)  | 0001 - 0256 
-120  | 000       | 001-057   |ExpansionGM2Drum(GM2#)      |0001-0009
-*/
 
 // This is general function can kicks off a bank read
 // over a range of values. the 'parseType' indicates how 
 // the sysex payload is parsed to get the result.
-function collect_bank(msb_range, lsb_range, pc_range, parseType) {
+function collect_bank(msb_range, lsb_range, pc_range, instrType) {
   g_msb_range = msb_range;
   g_msb = msb_range[0];
   g_lsb_range = lsb_range;
   g_lsb = lsb_range[0];
   g_pc_range = pc_range;
-  g_pc = 0;
-  g_group = parseType;
+  g_pc = pc_range[0];
+  g_instr_type = instrType;
   load_part(g_msb, g_lsb, g_pc);
-  read_name(g_group);
+  read_name(g_instr_type);
+
+  // start a timeout -- if the message does not come back,
+  // then this bank is not available.
+  g_bank_timeout_id = setTimeout(bank_timeout, 500);
 }
 
+function bank_timeout() {
+  clearTimeout(g_bank_timeout_id);
+  g_bank_timeout_id = undefined;
 
+  console.log("*** BANK NOT AVAILABLE ***");
+}
 // ------------------------------------------------------------------------
 
 
@@ -365,8 +390,8 @@ g_next_midi_callback_fn = function(event) {
     // this is the category.
     category = event.data[11];
 
-    if (g_patch_name != "<<No media>>") {
-      console.log(g_patch_name+" cat="+category);
+    if (g_patch_name != "<<No media>>" && g_patch_name != "INIT TONE   ") {
+      console.log("'"+g_patch_name+"' cat="+category);
 
       // TODO : LOAD SOUND INTO DATABASE
       // g_msb g_lsb g_pc g_patch_name g_category
@@ -381,7 +406,7 @@ g_next_midi_callback_fn = function(event) {
         g_lsb = g_lsb_range[0];
         // now update msb.
         g_msb++;
-        if (g_msb >= g_msb_range[1]) {
+        if (g_msb > g_msb_range[1]) {
           // we're done.
           g_msb=-1
         }
@@ -391,7 +416,7 @@ g_next_midi_callback_fn = function(event) {
     if (g_msb >= 0) {
       // continue...
       load_part(g_msb, g_lsb, g_pc);
-      read_name(g_group);
+      read_name(g_instr_type);
     } else {
       // TODO : we are DONE with this bank.
       console.log("**** BANK DONE ****");
@@ -443,7 +468,7 @@ function read_name(engineName) {
         0xf7
         ]);
 
-  }
+  } else
 
   if (engineName == "sns") {
     // 19 01 00 00
@@ -465,7 +490,7 @@ function read_name(engineName) {
         0x00, // checksum
         0xf7
         ]);
-  }
+  } else
 
   if (engineName == "snd") {
     // 19 03 00 00
@@ -487,7 +512,7 @@ function read_name(engineName) {
         0x00, // checksum
         0xf7
         ]);
-  }
+  } else
 
   if (engineName == "pcms") {
     // 19 00 00 00
@@ -521,7 +546,7 @@ function read_name(engineName) {
         0x00, // checksum
         0xf7
         ]);
-  }
+  } else
 
   if (engineName == "pcmd") {
     // 19 10 00 00
@@ -543,6 +568,46 @@ function read_name(engineName) {
         0x00, // checksum
         0xf7
         ]);
+  } 
+  else 
+  if (engineName == "expcm") {
+    // 19 00 00 00
+
+    // Note these sounds can't be edited so they 
+    // can't be read out?
+
+    /*
+    | 00 00 00 | PCM Synth Tone Common (0x50 80b)
+    | 00 02 00 | PCM Synth Tone Common MFX (0x01 0x11) 273
+    | 00 10 00 | PCM Synth Tone PMT (Partial Mix Table) (0x29) 41
+    | 00 20 00 | PCM Synth Tone Partial (Partial 1) (01 1a) 282
+    | 00 22 00 | PCM Synth Tone Partial (Partial 2) (01 1a) 282
+    | 00 24 00 | PCM Synth Tone Partial (Partial 3) (01 1a) 282
+    | 00 26 00 | PCM Synth Tone Partial (Partial 4) (01 1a) 282
+    | 00 30 00 | PCM Synth Tone Common 2 (0x3c) 60
+    -> 1582 b total 06 2e
+    */
+
+    // read first 12 bytes -- this is the name!
+    sendSYSEXwithRolandChecksum([0xf0, 0x41, 16, 
+        0x00, 0x00, 0x64, // model 1,2,3
+        0x11, // cmd -> RQ1
+        0x19, 0x00, 0x00, 0x00, // addr
+        0x00, 0x00, 0x00, 12, // size
+        0x00, // checksum
+        0xf7
+        ]);
+    sendSYSEXwithRolandChecksum([0xf0, 0x41, 16, 
+        0x00, 0x00, 0x64, // model 1,2,3
+        0x11, // cmd -> RQ1
+        0x19, 0x00, 0x30, 0x10, // addr
+        0x00, 0x00, 0x00, 1, // size
+        0x00, // checksum
+        0xf7
+        ]);
+
+  } else {
+    console.log("Read name ... unknown type "+engineName);
   }
 
 }
