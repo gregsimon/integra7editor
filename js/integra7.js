@@ -70,6 +70,7 @@ var g_pc_range;
 var g_pc;
 var g_group;
 var g_cat_offset;
+var g_patch_name;
 
 var total_tones = 0;
 
@@ -83,17 +84,7 @@ SN-A
  089 | 064 - 065 | 001 - 128 | Preset SN Acoustic Tone    | 0001 - 0256
 */
 function collectSNA_Preset(){
-  g_msb_range = [89, 89];
-  g_msb = 89;
-  g_lsb_range = [64, 65];
-  g_lsb = 64;
-  g_pc_range = [0, 127];
-  g_pc = 0;
-  g_group = "sna";
-  g_cat_offset = -1;
-
-  load_part(g_msb, g_lsb, g_pc);
-  read_name(g_group);
+  collect_bank([89,89],[64,65],[0,127],'sna');
 }
 
 
@@ -110,17 +101,7 @@ SN-S
  095 | 072       | 001 - 085 |                            | 1025 - 1109
 */
 function collectSNS_Preset() {
-  g_msb_range = [95, 95];
-  g_msb = 95;
-  g_lsb_range = [64, 72];
-  g_lsb = 64;
-  g_pc_range = [0, 127];
-  g_pc = 0;
-  g_group = "sns";
-  g_cat_offset = 0x36;
-
-  load_part(g_msb, g_lsb, g_pc);
-  read_name(g_group);
+  collect_bank([95,95],[64,72],[0,127],'sns');
 }
 
 /*
@@ -133,17 +114,7 @@ function collectSNS_Preset() {
  088 | 064       | 001 - 026 | Preset SN Drum Kit         | 0001 - 0026
 */
 function collectSND_Preset() {
-  g_msb_range = [88, 88];
-  g_msb = 88;
-  g_lsb_range = [64, 64];
-  g_lsb = 64;
-  g_pc_range = [0, 25];
-  g_pc = 0;
-  g_group = "snd";
-  g_cat_offset = -1;
-
-  load_part(g_msb, g_lsb, g_pc);
-  read_name(g_group);
+  collect_bank([88,88],[64,64],[0,25],'snd');
 }
 
 /*
@@ -158,17 +129,7 @@ function collectSND_Preset() {
  121 | 000 -     | 001 - 128 | GM2 Tone                   | 0001 - 0256
 */
 function collectPCMS_Preset() {
-  g_msb_range = [87, 87];
-  g_msb = 87;
-  g_lsb_range = [64, 70];
-  g_lsb = 64;
-  g_pc_range = [0, 127];
-  g_pc = 0;
-  g_group = "pcms";
-  g_cat_offset = -1;
-
-  load_part(g_msb, g_lsb, g_pc);
-  read_name(g_group);
+  collect_bank([87,87],[64,70],[0,127],'pcms');
 }
 
 /*
@@ -184,17 +145,7 @@ function collectPCMS_Preset() {
 
 */
 function collectPCMD_Preset() {
-  g_msb_range = [86, 86];
-  g_msb = 86;
-  g_lsb_range = [64, 64];
-  g_lsb = 64;
-  g_pc_range = [0, 13];
-  g_pc = 0;
-  g_group = "pcmd";
-  g_cat_offset = -1;
-
-  load_part(g_msb, g_lsb, g_pc);
-  read_name(g_group);
+  collect_bank([86,86], [64,64], [0,13], 'pcmd');
 }
 
 
@@ -205,10 +156,10 @@ MSB|LSB |NUMBER | | -----+-----------+-----------+----------------------------+-
 092 | 000 | 001 - 079 | Expansion PCM Drum (SRX01) | 0001 - 0079
 */
 function collectSRX01_Tone() {
-  collect_SRX_Tone([93,93], [0,0],[0,40],'pcms');
+  collect_bank([93,93], [0,0],[0,40],'pcms');
 }
 function collectSRX01_Drum() {
-  collect_SRX_Tone([92,92], [0,0],[0,78],'pcmd');
+  collect_bank([92,92], [0,0],[0,78],'pcmd');
 }
 /*
 BANK SELECT | PROGRAM | GROUP | NUMBER
@@ -216,7 +167,7 @@ MSB |LSB  | NUMBER    | | -----+-----------+-----------+------------------------
 093 | 001 | 001 - 050 | Expansion PCM Tone (SRX02) | 0001 - 0050
 */
 function collectSRX02_Tone() {
-  collect_SRX_Tone([93,93], [1,1],[0,49],'pcms');
+  collect_bank([93,93], [1,1],[0,49],'pcms');
 }
 /*
 BANK SELECT | PROGRAM | GROUP | NUMBER
@@ -225,10 +176,10 @@ MSB |LSB  | NUMBER    | | -----+-----------+-----------+------------------------
 092 | 002 | 001 - 012 | Expansion PCM Drum (SRX03) | 0001 - 0012
 */
 function collectSRX03_Tone() {
-  collect_SRX_Tone([93,93], [2,2],[0,127],'pcms');
+  collect_bank([93,93], [2,2],[0,127],'pcms');
 }
 function collectSRX03_Drum() {
-  collect_SRX_Tone([92,92], [2,2],[0,11],'pcmd');
+  collect_bank([92,92], [2,2],[0,11],'pcmd');
 }
 /*
 BANK SELECT | PROGRAM | GROUP | NUMBER
@@ -236,7 +187,7 @@ MSB |LSB  | NUMBER    | | -----+-----------+-----------+------------------------
 093 | 003 | 001 - 128 | Expansion PCM Tone (SRX04) | 0001 - 0128
 */
 function collectSRX04_Tone() {
-  collect_SRX_Tone([93,93], [3,3],[0,127],'pcms');
+  collect_bank([93,93], [3,3],[0,127],'pcms');
 }
 /*
 093 | 004 | 001 - 128 | Expansion PCM Tone (SRX05) | 0001 - 0128
@@ -245,10 +196,10 @@ function collectSRX04_Tone() {
 092 | 004 | 001 - 034 | Expansion PCM Drum (SRX05) | 0001 - 0034
 */
 function collectSRX05_Tone() {
-  collect_SRX_Tone([93,93],[4,6],[0,127],'pcms');
+  collect_bank([93,93],[4,6],[0,127],'pcms');
 }
 function collectSRX05_Drum() {
-  collect_SRX_Tone([92,92],[2,2],[0,11],'pcmd');
+  collect_bank([92,92],[2,2],[0,11],'pcmd');
 }
 /*
 093 | 007 | 001 - 128 | Expansion PCM Tone (SRX06) | 0001 - 0128 
@@ -257,10 +208,10 @@ function collectSRX05_Drum() {
 092 | 007 | 001 - 005 | Expansion PCM Drum (SRX06) | 0001 - 0005
 */
 function collectSRX06_Tone() {
-  collect_SRX_Tone([93,93],[7,10],[0,127],'pcms');
+  collect_bank([93,93],[7,10],[0,127],'pcms');
 }
 function collectSRX06_Drum() {
-  collect_SRX_Tone([92,92],[7,7],[0,4],'pcmd');
+  collect_bank([92,92],[7,7],[0,4],'pcmd');
 }
 /*
 093 | 011 | 001 - 128 | Expansion PCM Tone (SRX07) | 0001 - 0128 
@@ -269,10 +220,10 @@ function collectSRX06_Drum() {
 092 | 011 | 001 - 011 | Expansion PCM Drum (SRX07) | 0001 - 001
 */
 function collectSRX07_Tone() {
-  collect_SRX_Tone([93,93],[11,14],[0,127],'pcms');
+  collect_bank([93,93],[11,14],[0,127],'pcms');
 }
 function collectSRX07_Drum() {
-  collect_SRX_Tone([92,92],[11,11],[0,10],'pcmd');
+  collect_bank([92,92],[11,11],[0,10],'pcmd');
 }
 /*
 93  | 015 | 001 - 128 | Expansion PCM Tone (SRX08)  | 0001 - 0128 
@@ -281,10 +232,10 @@ function collectSRX07_Drum() {
 092 | 015 | 001 - 021 | Expansion PCM Drum (SRX08) | 0001 - 0021
 */
 function collectSRX08_Tone() {
-  collect_SRX_Tone([93,93],[15,18],[0,127],'pcms');
+  collect_bank([93,93],[15,18],[0,127],'pcms');
 }
 function collectSRX08_Drum() {
-  collect_SRX_Tone([92,92],[15,15],[0,20],'pcmd');
+  collect_bank([92,92],[15,15],[0,20],'pcmd');
 }
 /*
 093  | 019 | 001 - 128 | Expansion PCM Tone (SRX09) | 0001 - 0128 
@@ -293,31 +244,42 @@ function collectSRX08_Drum() {
 092  | 019 | 001 - 012 | Expansion PCM Drum (SRX09) | 0001 - 001
 */
 function collectSRX09_Tone() {
-  collect_SRX_Tone([93,93],[19,22],[0,127],'pcms');
+  collect_bank([93,93],[19,22],[0,127],'pcms');
 }
 function collectSRX09_Drum() {
-  collect_SRX_Tone([92,92],[19,19],[0,11],'pcmd');
+  collect_bank([92,92],[19,19],[0,11],'pcmd');
 }
 /*
 093 | 023 | 001 - 100 | Expansion PCM Tone (SRX10) | 0001 - 0100
 */
 function collectSRX10_Tone() {
-  collect_SRX_Tone([93,93],[23,23],[0,99],'pcms');
+  collect_bank([93,93],[23,23],[0,99],'pcms');
 }
 /*
 093 | 024 | 001 - 042 | Expansion PCM Tone (SRX11) | 0001 - 0042
 */
 function collectSRX11_Tone() {
-  collect_SRX_Tone([93,93],[24,24],[0,41],'pcms');
+  collect_bank([93,93],[24,24],[0,41],'pcms');
 }
 /*
 093 | 026 | 001 - 050 | Expansion PCM Tone (SRX12) | 0001 - 0050
 */
 function collectSRX12_Tone() {
-  collect_SRX_Tone([93,93],[26,26],[0,49],'pcms');
+  collect_bank([93,93],[26,26],[0,49],'pcms');
 }
 
-function collect_SRX_Tone(msb_range, lsb_range, pc_range, parseType) {
+
+/*
+089|096 |001-017|ExpansionSNTone(ExSN1) |0001-0017 -----+-----------+-----------+----------------------------+------------- 089|097 |001-017|ExpansionSNTone(ExSN2) |0001-0017 -----+-----------+-----------+----------------------------+------------- 089|098 |001-050|ExpansionSNTone(ExSN3) |0001-0050 -----+-----------+-----------+----------------------------+------------- 089|099 |001-012|ExpansionSNTone(ExSN4) |0001-0012 -----+-----------+-----------+----------------------------+------------- 089|100 |001-012|ExpansionSNTone(ExSN5) |0001-0012 -----+-----------+-----------+----------------------------+------------- 088|101 |001-007|ExpansionSNDrum(ExSN6) |0001-0007 -----+-----------+-----------+----------------------------+------------- 097 | 000 | 001 - 128 | Expansion PCM Tone (ExPCM) | 0001 - 0128
+|:|:| |:
+|003 |001-128| |0385-0512 096 | 000 | 001 - 019 | Expansion PCM Drum (ExPCM) | 0001 - 0019
+-----+-----------+-----------+----------------------------+------------- 121 | 000 - | 001 - 128 | Expansion GM2 Tone (GM2#) | 0001 - 0256 120|000 |001-057|ExpansionGM2Drum(GM2#) |0001-0009
+*/
+
+// This is general function can kicks off a bank read
+// over a range of values. the 'parseType' indicates how 
+// the sysex payload is parsed to get the result.
+function collect_bank(msb_range, lsb_range, pc_range, parseType) {
   g_msb_range = msb_range;
   g_msb = msb_range[0];
   g_lsb_range = lsb_range;
@@ -332,7 +294,6 @@ function collect_SRX_Tone(msb_range, lsb_range, pc_range, parseType) {
 
 // ------------------------------------------------------------------------
 
-var g_patch_name;
 
 g_next_midi_callback_fn = function(event) {
 
@@ -371,6 +332,9 @@ g_next_midi_callback_fn = function(event) {
       // continue...
       load_part(g_msb, g_lsb, g_pc);
       read_name(g_group);
+    } else {
+      // TODO : we are DONE with this bank.
+      console.log("**** BANK DONE ****");
     }
   }
 
