@@ -12,79 +12,120 @@ function integra7_init() {
    		navigator.requestMIDIAccess({sysex: true}).then( onMIDIInit, onMIDIFail );
 }
 
-function midiMessageReceived(event) {
-	console.log("MIDI MESSAGE IN "+event.data.length);
+var g_next_midi_callback_fn = undefined;
 
-  //for (i=0; i<12; i++) {
-    console.log(String.fromCharCode.apply(null, event.data.subarray(11, 23)));
-  //}
+function midiMessageReceived(event) {
+	//console.log("MIDI MESSAGE IN "+event.data.length);
+
+  if (g_next_midi_callback_fn != undefined)
+    g_next_midi_callback_fn(event);
+
+  //console.log(String.fromCharCode.apply(null, event.data.subarray(11, 23)));
 }
+
+var g_lsb_range;
+var g_lsb;
+var g_msb = [0x89];
+var g_pc_range;
+var g_pc;
 
 /*
 SN-A
- BANK SELECT     | PROGRAM   | GROUP                   | NUMBER
- MSB | LSB       | NUMBER    |                         | 
+ BANK SELECT     | PROGRAM   | GROUP                      | NUMBER
+ MSB | LSB       | NUMBER    |                            | 
 -----+-----------+-----------+----------------------------+-------------
- 089 | 000 - 001 | 001 - 128 | User SN Acoustic Tone    | 0001 - 0256
+ 089 | 000 - 001 | 001 - 128 | User SN Acoustic Tone      | 0001 - 0256
 -----+-----------+-----------+----------------------------+-------------
- 089 | 064 - 065 | 001 - 128 | Preset SN Acoustic Tone  | 0001 - 0256
+ 089 | 064 - 065 | 001 - 128 | Preset SN Acoustic Tone    | 0001 - 0256
+*/
+function collectSNA_Preset(){
+  g_msb_range = [89, 89];
+  g_msb = 89;
+  g_lsb_range = [64, 65];
+  g_lsb = 64;
+  g_pc_range = [0, 127];
+  g_pc = 0;
 
+  g_next_midi_callback_fn = function(event) {
+    console.log(String.fromCharCode.apply(null, event.data.subarray(11, 23))); 
+
+    g_pc++;
+    if (g_pc >= g_pc_range[1]) {
+      g_pc = g_pc_range[0];
+      // now update lsb.
+      g_lsb++;
+      if (g_lsb >= g_lsb_range[1]) {
+        g_lsb = g_lsb_range[0];
+        // now update msb.
+        g_msb++;
+        if (g_msb >= g_msb_range[1]) {
+          // we're done.
+          g_msb=-1
+        }
+      }
+    }
+
+    if (g_msb >= 0) {
+      // continue...
+      load_part(g_msb, g_lsb, g_pc);
+      read_name("sna");
+    }
+
+  };
+
+  load_part(g_msb, g_lsb, g_pc);
+  read_name("sna");
+}
+
+
+/*
 SN-S
- BANK SELECT     | PROGRAM   | GROUP                   | NUMBER
- MSB | LSB       | NUMBER    |                         | 
+ BANK SELECT     | PROGRAM   | GROUP                      | NUMBER
+ MSB | LSB       | NUMBER    |                            | 
 -----+-----------+-----------+----------------------------+-------------
- 095 | 000 - 003 | 001 - 128 | User SN Synth Tone | 0001 - 0512
+ 095 | 000 - 003 | 001 - 128 | User SN Synth Tone         | 0001 - 0512
 -----+-----------+-----------+----------------------------+-------------
- 095 | 064 | 001 - 128 | Preset SN Synth Tone | 0001 - 0128
- | : | : | | : 
- 095 | 072 | 001 - 085 | | 1025 - 1109
+ 095 | 064       | 001 - 128 | Preset SN Synth Tone       | 0001 - 0128
+     | :         | :         |                            | : 
+ 095 | 072       | 001 - 085 |                            | 1025 - 1109
 
  SN-D
- BANK SELECT     | PROGRAM   | GROUP                   | NUMBER
- MSB | LSB       | NUMBER    |                         | 
+ BANK SELECT     | PROGRAM   | GROUP                      | NUMBER
+ MSB | LSB       | NUMBER    |                            | 
 -----+-----------+-----------+----------------------------+-------------
- 088 | 000 | 001 - 064 | User SN Drum Kit | 0001 - 0064
+ 088 | 000       | 001 - 064 | User SN Drum Kit           | 0001 - 0064
 -----+-----------+-----------+----------------------------+-------------
- 088 | 064 | 001 - 026 | Preset SN Drum Kit | 0001 - 0026
+ 088 | 064       | 001 - 026 | Preset SN Drum Kit         | 0001 - 0026
 
  PCM-S
- BANK SELECT     | PROGRAM   | GROUP                   | NUMBER
- MSB | LSB       | NUMBER    |                         | 
+ BANK SELECT     | PROGRAM   | GROUP                      | NUMBER
+ MSB | LSB       | NUMBER    |                            | 
 -----+-----------+-----------+----------------------------+-------------
- 087 | 000 - 001 | 001 - 128 | User PCM Synth Tone | 0001 - 0256
+ 087 | 000 - 001 | 001 - 128 | User PCM Synth Tone        | 0001 - 0256
 -----+-----------+-----------+----------------------------+-------------
- 087 | 064 - 070 | 001 - 128 | Preset PCM Synth Tone | 0001 - 0896
+ 087 | 064 - 070 | 001 - 128 | Preset PCM Synth Tone      | 0001 - 0896
 -----+-----------+-----------+----------------------------+-------------
- 121 | 000 - | 001 - 128 | GM2 Tone | 0001 - 0256
+ 121 | 000 -     | 001 - 128 | GM2 Tone                   | 0001 - 0256
 
  PCM-DRUM
- BANK SELECT     | PROGRAM   | GROUP                   | NUMBER
- MSB | LSB       | NUMBER    |                         | 
+ BANK SELECT     | PROGRAM   | GROUP                      | NUMBER
+ MSB | LSB       | NUMBER    |                            | 
 -----+-----------+-----------+----------------------------+-------------
- 086 | 000 | 001 - 032 | User PCM Drum Kit | 0001 - 0032
+ 086 | 000       | 001 - 032 | User PCM Drum Kit          | 0001 - 0032
 -----+-----------+-----------+----------------------------+-------------
- 086 | 064 | 001 - 014 | Preset PCM Drum Kit | 0001 - 0014
+ 086 | 064       | 001 - 014 | Preset PCM Drum Kit        | 0001 - 0014
 -----+-----------+-----------+----------------------------+-------------
- 120 | 000 | 001 - 057 | GM2 Drum Kit | 0001 - 0009
+ 120 | 000       | 001 - 057 | GM2 Drum Kit               | 0001 - 0009
 
 */
-function load_bank(bank) {
+function load_part(msb, lsb, pc) {
   var ch = 0;
-
-  if (bank == "sna") {
-
-    midiOut.send([0xb0|ch, 0x00, 89, 
-                  0xb0|ch, 0x20, 64]);
-    midiOut.send([0xc0|ch, 45]);
-  }
-  if (bank == "sns") {
-
-    midiOut.send([0xb0|ch, 0x00, 95, 
-                  0xb0|ch, 0x20, 64]);
-    midiOut.send([0xc0|ch, 1]);
-  }
-
+  console.log("load_part "+msb+" "+lsb+" "+pc);
+  midiOut.send([0xb0|ch, 0x00, msb]);
+  midiOut.send([0xb0|ch, 0x20, lsb]);
+  midiOut.send([0xc0|ch, pc]);
 }
+
 function read_name(engineName) {
   // We're going to read memory from the Integra using sysex.
   // 19 00 00 00 | Temporary Tone (Part 1) 
@@ -100,7 +141,6 @@ function read_name(engineName) {
     // 19 01 00 00
 
     // read first 12 bytes -- this is the name!
-
     sendSYSEXwithRolandChecksum([0xf0, 0x41, 16, 
         0x00, 0x00, 0x64, // model 1,2,3
         0x11, // cmd -> RQ1
@@ -109,27 +149,64 @@ function read_name(engineName) {
         0x00, // checksum
         0xf7
         ]);
-
-
   }
 
-}
-function load_part() {
-  var channel = 1;
+  if (engineName == "sna") {
+    // 19 01 00 00
 
-  // SN-A
-  // Bank 089 000-001   PN 0x01 - 0x80
+    // read first 12 bytes -- this is the name!
+    sendSYSEXwithRolandChecksum([0xf0, 0x41, 16, 
+        0x00, 0x00, 0x64, // model 1,2,3
+        0x11, // cmd -> RQ1
+        0x19, 0x02, 0x00, 0x00, // addr
+        0x00, 0x00, 0x00, 12, // size
+        0x00, // checksum
+        0xf7
+        ]);
+  }
 
+  if (engineName == "snd") {
+    // 19 01 00 00
 
-  
-  //midiOut.send([0x90, 64, 64]);// note on
-  //midiOut.send([0x90, 64, 00]);// note off
+    // read first 12 bytes -- this is the name!
+    sendSYSEXwithRolandChecksum([0xf0, 0x41, 16, 
+        0x00, 0x00, 0x64, // model 1,2,3
+        0x11, // cmd -> RQ1
+        0x19, 0x03, 0x00, 0x00, // addr
+        0x00, 0x00, 0x00, 12, // size
+        0x00, // checksum
+        0xf7
+        ]);
+  }
 
+  if (engineName == "pcms") {
+    // 19 01 00 00
 
+    // read first 12 bytes -- this is the name!
+    sendSYSEXwithRolandChecksum([0xf0, 0x41, 16, 
+        0x00, 0x00, 0x64, // model 1,2,3
+        0x11, // cmd -> RQ1
+        0x19, 0x00, 0x00, 0x00, // addr
+        0x00, 0x00, 0x00, 12, // size
+        0x00, // checksum
+        0xf7
+        ]);
+  }
 
+  if (engineName == "pcmd") {
+    // 19 01 00 00
 
+    // read first 12 bytes -- this is the name!
+    sendSYSEXwithRolandChecksum([0xf0, 0x41, 16, 
+        0x00, 0x00, 0x64, // model 1,2,3
+        0x11, // cmd -> RQ1
+        0x19, 0x10, 0x00, 0x00, // addr
+        0x00, 0x00, 0x00, 12, // size
+        0x00, // checksum
+        0xf7
+        ]);
+  }
 
-	//sendSYSEXwithRolandChecksum([0x0, 0xa0], [0x0a, 1, 2, 3]);
 }
 
 // --- MIDI utilities --
