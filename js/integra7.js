@@ -86,6 +86,9 @@ SN-A
 function collectSNA_Preset(){
   collect_bank([89,89],[64,65],[0,127],'sna');
 }
+function collectSNA_User(){
+  collect_bank([89,89],[0,1],[0,127],'sna');
+}
 
 
 
@@ -103,6 +106,9 @@ SN-S
 function collectSNS_Preset() {
   collect_bank([95,95],[64,72],[0,127],'sns');
 }
+function collectSNS_User() {
+  collect_bank([95,95],[0,3],[0,127],'sns');
+}
 
 /*
  SN-D
@@ -115,6 +121,9 @@ function collectSNS_Preset() {
 */
 function collectSND_Preset() {
   collect_bank([88,88],[64,64],[0,25],'snd');
+}
+function collectSND_User() {
+  collect_bank([88,88],[0,0],[0,63],'snd');
 }
 
 /*
@@ -131,6 +140,9 @@ function collectSND_Preset() {
 function collectPCMS_Preset() {
   collect_bank([87,87],[64,70],[0,127],'pcms');
 }
+function collectPCMS_User() {
+  collect_bank([87,87],[0,1],[0,127],'pcms');
+}
 
 /*
  PCM-DRUM
@@ -146,6 +158,9 @@ function collectPCMS_Preset() {
 */
 function collectPCMD_Preset() {
   collect_bank([86,86], [64,64], [0,13], 'pcmd');
+}
+function collectPCMD_User() {
+  collect_bank([86,86], [0,0], [0,31], 'pcmd');
 }
 
 
@@ -268,12 +283,54 @@ function collectSRX12_Tone() {
   collect_bank([93,93],[26,26],[0,49],'pcms');
 }
 
+function collect_EXSN1() {
+  collect_bank([89,89], [96,96],[0,16],'sna');
+}
+function collect_EXSN2() {
+  collect_bank([89,89], [97,97],[0,16],'sna');
+}
+function collect_EXSN3() {
+  collect_bank([89,89], [98,98],[0,49],'sna');
+}
+function collect_EXSN4() {
+  collect_bank([89,89], [99,99],[0,11],'sna');
+}
+function collect_EXSN5() {
+  collect_bank([89,89], [100,100],[0,11],'sna');
+}
+function collect_EXSN6() {
+  collect_bank([88,88], [101,101],[0,6],'snd');
+}
+
+function collect_ExPCM_Tone() {
+  collect_bank([97,97],[0,3],[0,127],'pcms');
+}
+function collect_ExPCM_Drum() {
+  collect_bank([96,96],[0,0],[0,127],'pcmd');
+}
 
 /*
-089|096 |001-017|ExpansionSNTone(ExSN1) |0001-0017 -----+-----------+-----------+----------------------------+------------- 089|097 |001-017|ExpansionSNTone(ExSN2) |0001-0017 -----+-----------+-----------+----------------------------+------------- 089|098 |001-050|ExpansionSNTone(ExSN3) |0001-0050 -----+-----------+-----------+----------------------------+------------- 089|099 |001-012|ExpansionSNTone(ExSN4) |0001-0012 -----+-----------+-----------+----------------------------+------------- 089|100 |001-012|ExpansionSNTone(ExSN5) |0001-0012 -----+-----------+-----------+----------------------------+------------- 088|101 |001-007|ExpansionSNDrum(ExSN6) |0001-0007 -----+-----------+-----------+----------------------------+------------- 097 | 000 | 001 - 128 | Expansion PCM Tone (ExPCM) | 0001 - 0128
-|:|:| |:
-|003 |001-128| |0385-0512 096 | 000 | 001 - 019 | Expansion PCM Drum (ExPCM) | 0001 - 0019
------+-----------+-----------+----------------------------+------------- 121 | 000 - | 001 - 128 | Expansion GM2 Tone (GM2#) | 0001 - 0256 120|000 |001-057|ExpansionGM2Drum(GM2#) |0001-0009
+089  |096        |001-017    |ExpansionSNTone(ExSN1)      |0001-0017 
+-----+-----------+-----------+----------------------------+------------- 
+089  |097        |001-017    |ExpansionSNTone(ExSN2)      |0001-0017 
+-----+-----------+-----------+----------------------------+------------- 
+089  |098        |001-050    |ExpansionSNTone(ExSN3)      |0001-0050 
+-----+-----------+-----------+----------------------------+------------- 
+089  |099        |001-012    |ExpansionSNTone(ExSN4)      |0001-0012 
+-----+-----------+-----------+----------------------------+------------- 
+089  |100        |001-012    |ExpansionSNTone(ExSN5)      |0001-0012 
+-----+-----------+-----------+----------------------------+------------- 
+088  |101        |001-007    |ExpansionSNDrum(ExSN6)      |0001-0007 
+
+
+-----+-----------+-----------+----------------------------+------------- 
+097  | 000       | 001 - 128 | Expansion PCM Tone (ExPCM) | 0001 - 0128
+     | :         |  :        |                            | :
+     | 003       | 001-128   |                            | 0385-0512 
+096  | 000       | 001 - 019 | Expansion PCM Drum (ExPCM) | 0001 - 0019
+-----+-----------+-----------+----------------------------+------------- 
+121  | 000 -     | 001 - 128 | Expansion GM2 Tone (GM2#)  | 0001 - 0256 
+120  | 000       | 001-057   |ExpansionGM2Drum(GM2#)      |0001-0009
 */
 
 // This is general function can kicks off a bank read
@@ -310,6 +367,9 @@ g_next_midi_callback_fn = function(event) {
 
     if (g_patch_name != "<<No media>>") {
       console.log(g_patch_name+" cat="+category);
+
+      // TODO : LOAD SOUND INTO DATABASE
+      // g_msb g_lsb g_pc g_patch_name g_category
     }
 
     g_pc++;
@@ -349,6 +409,8 @@ function load_part(msb, lsb, pc) {
   midiOut.send([0xc0|ch, pc]);
 }
 
+// Different sound sources store their name and category
+// at different offsets into the payload. 
 function read_name(engineName) {
   // We're going to read memory from the Integra using sysex.
   // 19 00 00 00 | Temporary Tone (Part 1) 
@@ -482,28 +544,6 @@ function read_name(engineName) {
         0xf7
         ]);
   }
-/*
-  if (engineName == "srx01") {
-    // 19 10 00 00
-
-    // read first 12 bytes -- this is the name!
-    sendSYSEXwithRolandChecksum([0xf0, 0x41, 16, 
-        0x00, 0x00, 0x64, // model 1,2,3
-        0x11, // cmd -> RQ1
-        0x19, 0x10, 0x00, 0x00, // addr
-        0x00, 0x00, 0x00, 12, // size
-        0x00, // checksum
-        0xf7
-        ]);
-    sendSYSEXwithRolandChecksum([0xf0, 0x41, 16, 
-        0x00, 0x00, 0x64, // model 1,2,3
-        0x11, // cmd -> RQ1
-        0x19, 0x10, 0x00, 0x00, // addr
-        0x00, 0x00, 0x00, 1, // size
-        0x00, // checksum
-        0xf7
-        ]);
-  }*/
 
 }
 
