@@ -10,6 +10,7 @@ var deviceId = 17;
 var studioSetControlChannel = 16;
 
 
+
 function integra7_init() {
 	if (navigator.requestMIDIAccess)
    		navigator.requestMIDIAccess({sysex: true}).then( onMIDIInit, onMIDIFail );
@@ -35,8 +36,7 @@ function midiMessageReceived(event) {
 var g_bank_index =-1;
 var g_bank_collection_fns = [
   {fn:collectSNA_Preset, type:"Preset", eng:"SuperNATURAL-Acoustic"},
-  {fn:collectSNA_User, type:"User", eng:"SuperNATURAL-Acoustic"},
-  {fn:collectSNS_Preset, type:"Preset", eng:"SuperNATURAL-Synth"},
+/*  {fn:collectSNS_Preset, type:"Preset", eng:"SuperNATURAL-Synth"},
   {fn:collectSNS_User, type:"User", eng:"SuperNATURAL-Synth"},
   {fn:collectSND_Preset, type:"Preset", eng:"SuperNATURAL-Drums"},
   {fn:collectSND_User, type:"User", eng:"SuperNATURAL-Drums"},
@@ -61,7 +61,7 @@ var g_bank_collection_fns = [
   {fn:collectSRX09_Tone, type:"SRX", eng:"SRX09"},
   {fn:collectSRX10_Tone, type:"SRX", eng:"SRX10"},
   {fn:collectSRX11_Tone, type:"SRX", eng:"SRX11"},
-  {fn:collectSRX12_Tone, type:"SRX", eng:"SRX12"},
+  {fn:collectSRX12_Tone, type:"SRX", eng:"SRX12"}, */
   undefined
 ];
 
@@ -76,7 +76,7 @@ function build_script() {
   g_bank_index = 0;
   var bank = g_bank_collection_fns[g_bank_index];
   
-  document.getElementById('status').innerText = ("collecting "+bank.eng+" "+bank.type);
+  document.getElementById('s1').innerText = ("collecting "+bank.eng+" "+bank.type);
 
   bank.fn();
 }
@@ -88,11 +88,42 @@ function collect_next_bank() {
   g_bank_index++;
   var bank = g_bank_collection_fns[g_bank_index];
   if (bank != undefined) {
-    document.getElementById('status').innerText = ("collecting "+bank.eng+" "+bank.type);
+    document.getElementById('s1').innerText = ("collecting "+bank.eng+" "+bank.type);
     bank.fn();
   } else {
     console.log("complete, collected " + g_tones);
+
+    generate_patch_script();
   } 
+}
+
+
+function generate_patch_script() {
+  s = "[cubase parse file]\x0a\x0a\
+[parser version 0001]\x0a\x0a\
+[creators first name]Greg\x0a\x0a\
+[creators last name]Simon\x0a\x0a\
+[device manufacturer]ROLAND\x0a\x0a\
+[device name]Integra 7\x0a\x0a\
+[script name]ROLAND Integra 7\x0a\x0a\
+[script version]version 1.00\x0a\x0a\
+\x0a\x0a\
+[define patchnames]\x0a\x0a\
+\x0a\x0a\
+[mode]\tPatches\x0a\x0a\
+[g1]\t\tPatches 1\x0a\x0a\
+";
+
+  for (i=0; i<g_tones.length; ++i) {
+    var r = g_tones[i];
+    s += "[p2, "+r.pc+", "+r.msb.toString(10)+", "+
+        r.lsb.toString(10)+"]\t"+r.name+"\x0a\x0a"
+  }
+
+  s += "\x0a\x0a[end]\x0a\x0a";
+
+  var blob = new Blob([s], {type: "text/plain;charset=utf-8"});
+  saveAs(blob, "roland integra-7.txt");
 }
 
 var categories = [
@@ -517,15 +548,18 @@ g_next_midi_callback_fn = function(event) {
     category = event.data[11] & 0x7f;
 
     if (g_patch_name != "<<No media>>" && g_patch_name != "INIT TONE   ") {
-      console.log(g_msb+" "+g_lsb+" "+g_pc+" '"+g_patch_name+"' cat="+category.toString(2)+" "+categories[category]);
+      console.log(g_msb+" "+g_lsb+" "+g_pc+" '"+g_patch_name+"' cat="+category+" "+categories[category]);
 
       var t = {};
       t.name = g_patch_name;
       t.msb = g_msb;
-      t.lsb = g_msb;
+      t.lsb = g_lsb;
       t.pc = g_pc;
       t.cat = category;
+      t.catName = categories[category];
       g_tones.push(t);
+      document.getElementById('s2').innerText = g_tones.length + " Tones"
+
 
       // TODO : LOAD SOUND INTO DATABASE
       // g_msb g_lsb g_pc g_patch_name g_category

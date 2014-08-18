@@ -3,10 +3,12 @@
 		<title>Integra-7 Editor</title>
 		<link href='http://fonts.googleapis.com/css?family=Roboto' rel='stylesheet' type='text/css'>
 		<link rel="stylesheet" href="css/main.css" type="text/css">
+		<script src='js/filesaver.js'></script>
 		<script src='js/WebMIDIAPI.js'></script>
 		<script src="js/integra7.js"></script>
 	</head>
 	<body onload="integra7_init()">
+
 		<img src='images/integra7.png'>
 
 <div class="midi">MIDI Input: <select id=midiIn onchange='changeMidiIn();'>
@@ -22,8 +24,10 @@
 			<input type='button' value='Build Patch Script' onclick='build_script()'/>
 		</div>
 
-		<div id='status'></div>
+		<div id='s1'></div>
+		<div id='s2'></div>
 	
+	<!--
 		<input type='button' value="SN-A" onclick='collectSNA_Preset()'/>
 	
 		<input type='button' value="SN-A-User" onclick='collectSNA_User()'/>
@@ -63,6 +67,7 @@
 		<br>
 		<input type='button' value="EXGM2" onclick='collect_GM2_Tone()'/>
 		<input type='button' value="EXGM2-D" onclick='collect_GM2_Drum()'/>
+		-->
 	
 
 	</body>
