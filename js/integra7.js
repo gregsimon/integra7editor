@@ -36,7 +36,8 @@ function midiMessageReceived(event) {
 var g_bank_index =-1;
 var g_bank_collection_fns = [
   {fn:collectSNA_Preset, type:"Preset", eng:"SuperNATURAL-Acoustic"},
-/*  {fn:collectSNS_Preset, type:"Preset", eng:"SuperNATURAL-Synth"},
+  {fn:collectSNA_User, type:"User", eng:"SuperNATURAL-Acoustic"},
+  {fn:collectSNS_Preset, type:"Preset", eng:"SuperNATURAL-Synth"},
   {fn:collectSNS_User, type:"User", eng:"SuperNATURAL-Synth"},
   {fn:collectSND_Preset, type:"Preset", eng:"SuperNATURAL-Drums"},
   {fn:collectSND_User, type:"User", eng:"SuperNATURAL-Drums"},
@@ -61,7 +62,7 @@ var g_bank_collection_fns = [
   {fn:collectSRX09_Tone, type:"SRX", eng:"SRX09"},
   {fn:collectSRX10_Tone, type:"SRX", eng:"SRX10"},
   {fn:collectSRX11_Tone, type:"SRX", eng:"SRX11"},
-  {fn:collectSRX12_Tone, type:"SRX", eng:"SRX12"}, */
+  {fn:collectSRX12_Tone, type:"SRX", eng:"SRX12"}, 
   undefined
 ];
 
@@ -88,10 +89,12 @@ function collect_next_bank() {
   g_bank_index++;
   var bank = g_bank_collection_fns[g_bank_index];
   if (bank != undefined) {
-    document.getElementById('s1').innerText = ("collecting "+bank.eng+" "+bank.type);
+    t = ("collecting "+bank.eng+" -- "+bank.type);
+    console.log(t)
+    document.getElementById('s1').innerText = t;
     bank.fn();
   } else {
-    console.log("complete, collected " + g_tones);
+    console.log("complete!");
 
     generate_patch_script();
   } 
@@ -110,14 +113,39 @@ function generate_patch_script() {
 \x0a\x0a\
 [define patchnames]\x0a\x0a\
 \x0a\x0a\
-[mode]\tPatches\x0a\x0a\
-[g1]\t\tPatches 1\x0a\x0a\
+[mode]\tTone\x0a\x0a\
 ";
 
-  for (i=0; i<g_tones.length; ++i) {
-    var r = g_tones[i];
-    s += "[p2, "+r.pc+", "+r.msb.toString(10)+", "+
-        r.lsb.toString(10)+"]\t"+r.name+"\x0a\x0a"
+  // we're going to organize these in their instrument
+  // categories; ignoring the sound generation method.
+  // For each category there will be a [g1] followed by [p2] patches.
+
+  var cats = new Object;
+  categories.forEach(function(value, index, array) {
+    if (!cats.hasOwnProperty(value))
+      cats[value] = new Array();
+  });
+
+  // now divide up all the tones into categories.
+  g_tones.forEach(function(tone, index, array){
+    cats[tone.catName].push(tone);
+  });
+
+
+  // Now, write a group for each of the categories
+  for(prop in cats) {
+
+    tones = cats[prop];
+    if (!tones.length)
+      continue;
+
+    s += "[g1]\t\t"+prop+"\x0a\x0a";
+
+    for (i=0; i<tones.length; i++) {
+      tone = tones[i];
+      s += "[p2, "+tone.pc+", "+tone.msb.toString(10)+", "+
+          tone.lsb.toString(10)+"]\t"+tone.name+"\x0a";
+    }
   }
 
   s += "\x0a\x0a[end]\x0a\x0a";
@@ -128,53 +156,53 @@ function generate_patch_script() {
 
 var categories = [
 "No assign",          // 00000
-"PNO",          // 00001
-"EP",           // 00010
+"Ac. Piano",          // 00001
+"E. Piano",           // 00010
 "Organ",              // 00011
-"EP",    // 00100
-"EP",// 00101 
-"ORG",        // 00110
-"ORG",         // 00111
+"E. Piano",    // 00100
+"E. Piano",// 00101 
+"Organ",        // 00110
+"Organ",         // 00111
 "E. Guitar",          // 01000
-"KEY",        // 01001
-"KEY",           // 01010
+"Keyboards",        // 01001
+"Keyboards",           // 01010
 "E. Bass",            // 01011
-"ACC",         // 01100
-"ACC",     // 01101
-"BEL",            // 01110
-"BEL",              // 01111
-"AGT",               // 10000
-"EGT", 
-"DGT", 
-"Ac.BS",
-"E.BS", 
-"Syn.BS", 
-"PLK", 
-"STR", 
-"STR",
-"STR", 
-"BRS", 
-"BRS", 
-"WND", 
-"FLT", 
-"SAX", 
-"HIT", 
-"DRM", // DRM or VOX?
-"VOX", 
-"Syn.PAD", 
-"Syn.BRS",
-"Syn.PAD",
-"BELLPAD",
-"POLYKEY",// 100110
+"Accordian",         // 01100
+"Accordian",     // 01101
+"Bell",            // 01110
+"Bell",              // 01111
+"A. Guitar",               // 10000
+"E. Guitar", 
+"D. Guitar", 
+"Ac. Bass",
+"E. Bass", 
+"Syn.Bass", 
+"Plucked", 
+"Strings", 
+"Strings",
+"Strings", 
+"Brass", 
+"Brass", 
+"Woodwind", 
+"Flute", 
+"Sax", 
+"Hit", 
+"Drums", // DRM or VOX?
+"Vox", 
+"Syn.Pad", 
+"Syn.Brass",
+"Syn.Pad",
+"Bellpad",
+"Polykey",// 100110
 "FX",
-"Syn.SEQ",
+"Syn.Sequence",
 "PHR",
-"PLS",
+"Pulasting",
 "BTS",
-"HIT",
+"Hit",
 "SFX",
-"DRM",
-"PRC",
+"Drums",
+"Percussion",
 "48",
 "49",
 "50",
@@ -201,28 +229,28 @@ var categories = [
 "71",
 "72",
 "73",
-"DRM",
+"Drums",
 "75",
 "76",
 "77",
 "78",
-"DRM",
-"DRM",
+"Drums",
+"Drums",
 "81",
-"DRM",
+"Drums",
 "83",
 "84",
 "85",
 "86",
 "87",
-"DRM",
+"Drums",
 "89",
 "90",
 "91",
 "92",
 "93",
 "94",
-"PRC"
+"Percussion"
 
 
 ];
@@ -521,7 +549,7 @@ function collect_bank(msb_range, lsb_range, pc_range, instrType) {
 
   // start a timeout -- if the message does not come back,
   // then this bank is not available.
-  g_bank_timeout_id = setTimeout(bank_timeout, 500);
+  g_bank_timeout_id = setTimeout(bank_timeout, 1000);
 }
 
 function bank_timeout() {
@@ -547,7 +575,8 @@ g_next_midi_callback_fn = function(event) {
     // this is the category.
     category = event.data[11] & 0x7f;
 
-    if (g_patch_name != "<<No media>>" && g_patch_name != "INIT TONE   ") {
+    if (g_patch_name != "<<No media>>" && g_patch_name != "INIT TONE   "
+              && g_patch_name != "INIT KIT    ") {
       console.log(g_msb+" "+g_lsb+" "+g_pc+" '"+g_patch_name+"' cat="+category+" "+categories[category]);
 
       var t = {};
