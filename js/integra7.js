@@ -82,6 +82,9 @@ function build_script() {
 }
 
 function collect_next_bank() {
+  if (g_bank_index == -1 )
+    return;
+
   g_bank_index++;
   var bank = g_bank_collection_fns[g_bank_index];
   if (bank != undefined) {
@@ -94,41 +97,103 @@ function collect_next_bank() {
 
 var categories = [
 "No assign",          // 00000
-"Ac. Piano",          // 00001
-"E. Piano",           // 00010
+"PNO",          // 00001
+"EP",           // 00010
 "Organ",              // 00011
-"Other Keyboards",    // 00100
-"Accordion/Harmonica",// 00101 
-"Bell/Mallet",        // 00110
-"Ac. Guitar",         // 00111
+"EP",    // 00100
+"EP",// 00101 
+"ORG",        // 00110
+"ORG",         // 00111
 "E. Guitar",          // 01000
-"Dist Guitar",        // 01001
-"Ac. Bass",           // 01010
+"KEY",        // 01001
+"KEY",           // 01010
 "E. Bass",            // 01011
-"Synth Bass",         // 01100
-"Plucked/Stroke",     // 01101
-"Strings",            // 01110
-"Brass",              // 01111
-"Wind",               // 10000
-"Flute", 
-"Sax", 
-"Recorder",
-"Vox/Choir", 
-"Synth Lead", 
-"Synth Brass", 
-"Synth Pad/Strings", 
-"Synth Bellpad",
-"Synth PolyKey", 
-"FX", 
-"Synth Seq/Pop", 
-"Phrase", 
-"Pulsating", 
-"Beat & Groove", 
-"Hit", 
-"Sound FX", 
-"Drums", 
-"Percussion", 
-"Combination"
+"ACC",         // 01100
+"ACC",     // 01101
+"BEL",            // 01110
+"BEL",              // 01111
+"AGT",               // 10000
+"EGT", 
+"DGT", 
+"Ac.BS",
+"E.BS", 
+"Syn.BS", 
+"PLK", 
+"STR", 
+"STR",
+"STR", 
+"BRS", 
+"BRS", 
+"WND", 
+"FLT", 
+"SAX", 
+"HIT", 
+"DRM", // DRM or VOX?
+"VOX", 
+"Syn.PAD", 
+"Syn.BRS",
+"Syn.PAD",
+"BELLPAD",
+"POLYKEY",// 100110
+"FX",
+"Syn.SEQ",
+"PHR",
+"PLS",
+"BTS",
+"HIT",
+"SFX",
+"DRM",
+"PRC",
+"48",
+"49",
+"50",
+"51",
+"52",
+"53",
+"54",
+"55",
+"56",
+"57",
+"58",
+"59",
+"60",
+"61",
+"62",
+"63",
+"64",
+"65",
+"66",
+"67",
+"68",
+"69",
+"70",
+"71",
+"72",
+"73",
+"DRM",
+"75",
+"76",
+"77",
+"78",
+"DRM",
+"DRM",
+"81",
+"DRM",
+"83",
+"84",
+"85",
+"86",
+"87",
+"DRM",
+"89",
+"90",
+"91",
+"92",
+"93",
+"94",
+"PRC"
+
+
 ];
 
 var g_lsb_range;
@@ -449,10 +514,10 @@ g_next_midi_callback_fn = function(event) {
 
   } else {
     // this is the category.
-    category = event.data[11];
+    category = event.data[11] & 0x7f;
 
     if (g_patch_name != "<<No media>>" && g_patch_name != "INIT TONE   ") {
-      console.log("'"+g_patch_name+"' cat="+category);
+      console.log(g_msb+" "+g_lsb+" "+g_pc+" '"+g_patch_name+"' cat="+category.toString(2)+" "+categories[category]);
 
       var t = {};
       t.name = g_patch_name;
