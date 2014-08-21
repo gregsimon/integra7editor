@@ -12,6 +12,10 @@ var studioSetControlChannel = 16;
 
 
 function integra7_init() {
+
+  // TODO check if midi exists.
+
+
 	if (navigator.requestMIDIAccess)
    		navigator.requestMIDIAccess({sysex: true}).then( onMIDIInit, onMIDIFail );
 }
@@ -95,6 +99,9 @@ function collect_next_bank() {
     bank.fn();
   } else {
     console.log("complete!");
+    document.getElementById('s1').innerText = "";
+    document.getElementById('s2').innerText = "";
+    document.getElementById('s3').innerText = "Complete! File has been downloaded";
 
     generate_patch_script();
   } 
@@ -152,108 +159,114 @@ function generate_patch_script() {
 
   var blob = new Blob([s], {type: "text/plain;charset=utf-8"});
   saveAs(blob, "roland integra-7.txt");
+
+  // now generate the categories text file
+ /* var s = "";
+  for (i=0; i<g_tones.length; i++) {
+    tone = g_tones[i];
+    s += tone.cat.toString(2)+" "+tone.cat.toString(10)+" "+tone.name+"\x0a";
+  }
+
+  var blob = new Blob([s], {type: "text/plain;charset=utf-8"});
+  saveAs(blob, "roland integra-7-categories.txt");*/
 }
 
 var categories = [
-"No assign",          // 00000
-"Ac. Piano",          // 00001
-"E. Piano",           // 00010
-"Organ",              // 00011
-"E. Piano",    // 00100
-"E. Piano",// 00101 
-"Organ",        // 00110
-"Organ",         // 00111
-"E. Guitar",          // 01000
-"Keyboards",        // 01001
-"Keyboards",           // 01010
-"E. Bass",            // 01011
-"Accordian",         // 01100
-"Accordian",     // 01101
-"Bell",            // 01110
-"Bell",              // 01111
-"A. Guitar",               // 10000
-"E. Guitar", 
-"D. Guitar", 
-"Ac. Bass",
-"E. Bass", 
-"Syn.Bass", 
-"Plucked", 
-"Strings", 
-"Strings",
-"Strings", 
-"Brass", 
-"Brass", 
-"Woodwind", 
-"Flute", 
-"Sax", 
-"Hit", 
-"Drums", // DRM or VOX?
-"Vox", 
-"Syn.Pad", 
-"Syn.Brass",
-"Syn.Pad",
-"Bellpad",
-"Polykey",// 100110
-"FX",
-"Syn.Sequence",
-"PHR",
-"Pulasting",
-"BTS",
-"Hit",
-"SFX",
-"Drums",
-"Percussion",
-"48",
-"49",
-"50",
-"51",
-"52",
-"53",
-"54",
-"55",
-"56",
-"57",
-"58",
-"59",
-"60",
-"61",
-"62",
-"63",
-"64",
-"65",
-"66",
-"67",
-"68",
-"69",
-"70",
-"71",
-"72",
-"73",
-"Drums",
-"75",
-"76",
-"77",
-"78",
-"Drums",
-"Drums",
-"81",
-"Drums",
-"83",
-"84",
-"85",
-"86",
-"87",
-"Drums",
-"89",
-"90",
-"91",
-"92",
-"93",
-"94",
-"Percussion"
-
+ "No Assign", // 0
+ "Ac.Piano",
+ "Ac.Piano",
+ "",
+ "Ac.Piano",
+ "E.Piano",
+ "Organ",
+ "Organ",
+ "",
+ "Other Keyboards",
+ "Other Keyboards", // 10
+ "Other Keyboards",
+ "Accordian/Harmonica",
+ "Accordian/Harmonica",
+ "Bell/Mallet",
+ "Bell/Mallet",
+ "Ac.Guitar",
+ "E.Guitar",
+ "Dist.Guitar",
+ "Ac.Bass",
+ "E.Bass", //20
+ "Synth Bass",
+ "Plucked/Stroke", 
+ "Strings",
+ "Strings",
+ "Strings",
+ "Brass",
+ "Brass",
+ "Wind",
+ "Flute",
+ "Sax", //30
+ "",
+ "Vox/Choir",
+ "Vox/Choir",
+ "Synth Lead",
+ "Synth Brass",
+ "Synth Pad/Strings",
+ "Synth Bellpad",
+ "Synth PolyKey",
+ "FX",
+ "Synth Seq/Pop", //40
+ "",
+ "Pulsating",
+ "Beat & Groove",
+ "Hit",
+ "Sound FX",
+ "Drums",
+ "Percussion",
+ "",
+ "",
+ "", // 50
+ "DrumKit",
+ "",
+ "",
+ "",
+ "",
+ "",
+ "",
+ "",
+ "",
+ "", //60
+ "",
+ "",
+ "",
+ "",
+ "",
+ "",
+ "",
+ "Drums",
+ "",
+ "", //70
+ "",
+ "DrumKit",
+ "",
+ "DrumKit",
+ "",
+ "",
+ "",
+ "",
+ "DrumKit",
+ "DrumKit", //80
+ "",
+ "DrumKit",
+ "DrumKit",
+ "DrumKit",
+ "",
+ "",
+ "DrumKit",
+ "DrumKit",
+ "",
+ "", //90
 
 ];
+
+
 
 var g_lsb_range;
 var g_lsb;
@@ -577,7 +590,9 @@ g_next_midi_callback_fn = function(event) {
 
     if (g_patch_name != "<<No media>>" && g_patch_name != "INIT TONE   "
               && g_patch_name != "INIT KIT    ") {
-      console.log(g_msb+" "+g_lsb+" "+g_pc+" '"+g_patch_name+"' cat="+category+" "+categories[category]);
+      //console.log(g_msb+" "+g_lsb+" "+g_pc+" '"+g_patch_name+"' cat="+category+" "+categories[category]);
+      document.getElementById('s3').innerText = 
+          g_msb+" "+g_lsb+" "+g_pc+" '"+g_patch_name+"' cat="+category+" "+categories[category]
 
       var t = {};
       t.name = g_patch_name;
@@ -617,6 +632,7 @@ g_next_midi_callback_fn = function(event) {
     } else {
       // TODO : we are DONE with this bank.
       console.log("**** BANK DONE ****");
+      document.getElementById('s3').innerText = "**** Bank Done ****";
       collect_next_bank();
     }
   }
@@ -899,4 +915,7 @@ function changeMIDIOut( ev ) {
 
 function onMIDIFail( err ) {
   console.log("MIDI failed to initialize: " + err.code);
+  document.getElementById('midiFailed').style.display='block';
+
+
 }

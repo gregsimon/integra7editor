@@ -1,74 +1,65 @@
 <html>
 	<head>
-		<title>Integra-7 Editor</title>
+		<title>Integra-7 Patch Builder</title>
 		<link href='http://fonts.googleapis.com/css?family=Roboto' rel='stylesheet' type='text/css'>
 		<link rel="stylesheet" href="css/main.css" type="text/css">
 		<script src='js/filesaver.js'></script>
 		<script src='js/WebMIDIAPI.js'></script>
 		<script src="js/integra7.js"></script>
+		<style>
+			* { font-family:sans-serif;}
+			#build { font-size:28pt; }
+			#midiFailed {
+				border: 2px solid red;
+				padding: 30px;
+				font-size:18pt;
+			 	font-color:red;
+				display:none;
+			}
+		</style>
 	</head>
 	<body onload="integra7_init()">
 
-		<img src='images/integra7.png'>
+		<h2>Integra-7 Cubase Patch Script Builder</h2>
 
-<div class="midi">MIDI Input: <select id=midiIn onchange='changeMidiIn();'>
+		<p>
+		By Greg Simon <gregsimon@gmail.com>
+		<p>
+		This web application will build an inventory of all addressable patches
+		in a connected Integra-7 sound module. Any User patches, Preset patchces, 
+		and SRX cards currently loaded. This list will then be sorted by category
+		and a Cubase patch script will be downloaded. You can follow instructions
+		in your Cubase manual for how to install this script.
+		<p>
+		Limitations
+
+		<ul>
+		<li>The ExPCM data is *not* addressable via SysEx so will not be inventoried. </li>
+		<li>Any SRX cards that are not currently playable (i.e., not "loaded" into your Integra-7 will not be addressable and not included in this patch script.)</li>
+		</ul>
+		</p>
+
+		<div class="midi">MIDI Input: <select id=midiIn onchange='changeMidiIn();'>
 			<option value="">Not connected</option>
 		</select>
-	 MIDI Output:
+			 MIDI Output:
 		<select id=midiOut onchange='changeMidiOut();'>
 			<option value="">Not connected</option>
 		</select>
-</div>
+		</div>
 
 		<div>
-			<input type='button' value='Build Patch Script' onclick='build_script()'/>
+			<input type='button' id='build' value='Build Patch Script' onclick='build_script()'/>
 		</div>
 
 		<div id='s1'></div>
 		<div id='s2'></div>
+		<div id='s3'></div>
 	
-	<
-		<input type='button' value="SN-A" onclick='collectSNA_Preset()'/>
-	
-		<input type='button' value="SN-A-User" onclick='collectSNA_User()'/>
-		<input type='button' value="SN-S" onclick='collectSNS_Preset()'/>
-		<input type='button' value="SN-D" onclick='collectSND_Preset()'/>
-		<input type='button' value="PCM-S" onclick='collectPCMS_Preset()'/>
-		<input type='button' value="PCM-D" onclick='collectPCMD_Preset()'/>
-		<br>
-		<input type='button' value="SRX01" onclick='collectSRX01_Tone()'/>
-		<input type='button' value="SRX02" onclick='collectSRX02_Tone()'/>
-		<input type='button' value="SRX03" onclick='collectSRX03_Tone()'/>
-		<input type='button' value="SRX03-D" onclick='collectSRX03_Drum()'/>
-		<input type='button' value="SRX04" onclick='collectSRX04_Tone()'/>
-		<input type='button' value="SRX05" onclick='collectSRX05_Tone()'/>
-		<input type='button' value="SRX05-D" onclick='collectSRX05_Drum()'/>
-		<input type='button' value="SRX06" onclick='collectSRX06_Tone()'/>
-		<input type='button' value="SRX06-D" onclick='collectSRX06_Drum()'/>
-		<input type='button' value="SRX07" onclick='collectSRX07_Tone()'/>
-		<input type='button' value="SRX07-D" onclick='collectSRX07_Drum()'/>
-		<input type='button' value="SRX08" onclick='collectSRX08_Tone()'/>
-		<input type='button' value="SRX08-D" onclick='collectSRX08_Drum()'/>
-		<input type='button' value="SRX09" onclick='collectSRX09_Tone()'/>
-		<input type='button' value="SRX09-D" onclick='collectSRX09_Drum()'/>
-		<input type='button' value="SRX10" onclick='collectSRX10_Tone()'/>
-		<input type='button' value="SRX11" onclick='collectSRX11_Tone()'/>
-		<input type='button' value="SRX12" onclick='collectSRX12_Tone()'/>
-		<br>
-		<input type='button' value="EXSN1" onclick='collect_EXSN1()'/>
-		<input type='button' value="EXSN2" onclick='collect_EXSN2()'/>
-		<input type='button' value="EXSN3" onclick='collect_EXSN3()'/>
-		<input type='button' value="EXSN4" onclick='collect_EXSN4()'/>
-		<input type='button' value="EXSN5" onclick='collect_EXSN5()'/>
-		<input type='button' value="EXSN6" onclick='collect_EXSN6()'/>
-		<br>
-		<input type='button' value="EXPCM" onclick='collect_ExPCM_Tone()'/>
-		<input type='button' value="EXPCM-D" onclick='collect_ExPCM_Drum()'/>
-		<br>
-		<input type='button' value="EXGM2" onclick='collect_GM2_Tone()'/>
-		<input type='button' value="EXGM2-D" onclick='collect_GM2_Drum()'/>
-		
-	
+		<div id='midiFailed'>
+			You must have MIDI enabled on this version of Chrome. You can do this
+			by entering <a href='chrome://flags'>chrome://flags</a> in your URL bar and searching for "Enable Web MIDI API" Enable it, then relaunch chrome.
+		</div>
 
 	</body>
 </html>
